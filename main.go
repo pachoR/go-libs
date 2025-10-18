@@ -11,9 +11,21 @@ func init() {
 	godotenv.Load()
 }
 
+type Persona struct {
+	Id 			string 		`json:"id"`
+	Name 		string		`json:"name"`
+	Age 		int 		`json:"age"`
+	Salary 		float64 	`json:"salary"`
+	IsActive	bool	  	`json:"is_active"`
+}
+
 func main() {
-	err := oslib.CreateIndex("index_test")
+	indexName := "index_test"
+	err := oslib.CreateIndex(indexName, "mapping/test-mapping.json")
 	if err != nil {
 		fmt.Printf("main: %s\n", err.Error())
 	}
+
+	fmt.Println("Ingesting data")
+	err = oslib.IngestDataFromJson[Persona](indexName, "./locals/personas.json")
 }
