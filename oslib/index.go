@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"log"
 	"strings"
 	"time"
@@ -55,7 +56,7 @@ func getFormattedTime() string {
 	return fmt.Sprintf("%d-%d-%d-%d-%d-%d", current_time.Year(), current_time.Month(), current_time.Day(), current_time.Hour(), current_time.Minute(), current_time.Second())
 }
 
-func CreateIndex(indexName string) error {
+func CreateIndex(indexName string, mappingPath string) error {
 	cte, err := GetConnection()
 	if err != nil {
 		log.Fatal("Error: ", err.Error())
@@ -90,6 +91,13 @@ func CreateIndex(indexName string) error {
 		return fmt.Errorf("Error creating index (%s): %s", indexName, res.String())
 	}
 	log.Printf("Index %s created successfully\n", fullIndexName)
+
+	// Add mapping
+	err = ApplyMapping(fullIndexName, mappingPath)
+	if err != nil {
+		log.Fatalf("Error applying mapping: %s", err.Error())
+		return fmt.Errorf("Error applying mapping: %s", err.Error())
+	}
 
 	// getting the old indeces that use or were using this alias to eliminate them
 	oldIndices, err := getIndicesByAlias(indexName)
@@ -157,5 +165,44 @@ func CreateIndex(indexName string) error {
 		log.Printf("Old indeces (%s) removed successfully", oldIndicesAsStr)
 	}
 
+	return nil
+}
+
+func ApplyMapping(indexName string, mappingFilePath string) error {
+	cte, err := GetConnection()
+	if err != nil {
+		log.Fatal("Error: ", err.Error())
+		return err
+	}
+
+	if len(indexName) == 0 || len(mappingFilePath) == 0 {
+		log.Fatalf("Index name or mapping file path cannot be empty")
+		return fmt.Errorf("Index name or mapping file path cannot be empty")
+	}
+
+	mappingData, err := os.ReadFile(mappingFilePath)
+	if err != nil {
+		log.Fatalf("Error reading mapping file: %s", err.Error())
+		return fmt.Errorf("Error reading mapping file: %s", err.Error())
+	}
+
+	mappingReq := opensearchapi.IndicesPutMappingRequest {
+		Index: []string{indexName},
+		Body: strings.NewReader(string(mappingData)),
+	}
+
+	res, err := mappingReq.Do(context.Background(), cte)
+	if err != nil {
+		log.Fatalf("Error setting a mapping request: %s", err.Error())
+		return fmt.Errorf("Error setting a mapping request: %s", err.Error())
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Fatalf("Error setting a mapping request: %s", res.String())
+		return fmt.Errorf("Error setting a mapping request: %s", res.String())
+	}
+
+	log.Print("Mapping created successfully")
 	return nil
 }
