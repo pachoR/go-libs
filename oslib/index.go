@@ -15,7 +15,6 @@ import (
 func getIndicesByAlias(aliasName string) ([]string, error) {
 	client, err := GetConnection()
 	if err != nil {
-		log.Fatal("Error: ", err.Error())
 		return nil, err
 	}
 
@@ -59,7 +58,6 @@ func getFormattedTime() string {
 func CreateIndex(indexName string, mappingPath string) error {
 	cte, err := GetConnection()
 	if err != nil {
-		log.Fatal("Error: ", err.Error())
 		return err
 	}
 
@@ -81,13 +79,11 @@ func CreateIndex(indexName string, mappingPath string) error {
 
 	res, err := req.Do(context.Background(), cte)
 	if err != nil {
-		log.Fatal("Error creating index: ", err.Error())
 		return err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Fatalf("Error creating index (%s): %s", indexName, res.String())
 		return fmt.Errorf("Error creating index (%s): %s", indexName, res.String())
 	}
 	log.Printf("Index %s created successfully\n", fullIndexName)
@@ -95,14 +91,12 @@ func CreateIndex(indexName string, mappingPath string) error {
 	// Add mapping
 	err = ApplyMapping(fullIndexName, mappingPath)
 	if err != nil {
-		log.Fatalf("Error applying mapping: %s", err.Error())
 		return fmt.Errorf("Error applying mapping: %s", err.Error())
 	}
 
 	// getting the old indeces that use or were using this alias to eliminate them
 	oldIndices, err := getIndicesByAlias(indexName)
 	if err != nil {
-		log.Fatal("Error getting indices by alias", err.Error())
 		return err
 	}
 
@@ -139,7 +133,6 @@ func CreateIndex(indexName string, mappingPath string) error {
 	defer aliasRes.Body.Close()
 
 	if aliasRes.IsError() {
-		log.Fatalf("Error deleting alias from prev index/indexes: %s: %s", strings.Join(actions, ", "), aliasRes.String())
 		return fmt.Errorf("Error deleting alias from prev index/indexes: %s: %s", strings.Join(actions, ", "), aliasRes.String())
 	}
 	log.Printf("Alias updated successfully\n")
@@ -152,13 +145,11 @@ func CreateIndex(indexName string, mappingPath string) error {
 
 		deleteRes, err := deleteReq.Do(context.Background(), cte)
 		if err != nil {
-			log.Fatalf("Error deleting old indices: %s", err.Error())
 			return err
 		}
 		defer deleteRes.Body.Close()
 
 		if deleteRes.IsError() {
-			log.Fatalf("Error deleting the old indices: %s", oldIndicesAsStr)
 			return fmt.Errorf("Error deleting the old indices: %s", oldIndicesAsStr)
 		}
 
@@ -171,18 +162,15 @@ func CreateIndex(indexName string, mappingPath string) error {
 func ApplyMapping(indexName string, mappingFilePath string) error {
 	cte, err := GetConnection()
 	if err != nil {
-		log.Fatal("Error: ", err.Error())
 		return err
 	}
 
 	if len(indexName) == 0 || len(mappingFilePath) == 0 {
-		log.Fatalf("Index name or mapping file path cannot be empty")
 		return fmt.Errorf("Index name or mapping file path cannot be empty")
 	}
 
 	mappingData, err := os.ReadFile(mappingFilePath)
 	if err != nil {
-		log.Fatalf("Error reading mapping file: %s", err.Error())
 		return fmt.Errorf("Error reading mapping file: %s", err.Error())
 	}
 
@@ -193,13 +181,11 @@ func ApplyMapping(indexName string, mappingFilePath string) error {
 
 	res, err := mappingReq.Do(context.Background(), cte)
 	if err != nil {
-		log.Fatalf("Error setting a mapping request: %s", err.Error())
 		return fmt.Errorf("Error setting a mapping request: %s", err.Error())
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		log.Fatalf("Error setting a mapping request: %s", res.String())
 		return fmt.Errorf("Error setting a mapping request: %s", res.String())
 	}
 
