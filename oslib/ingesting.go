@@ -14,26 +14,22 @@ import (
 
 func IngestDataFromJson[T any](indexName string, jsonPath string) error {
 	if len(indexName) == 0 && len(jsonPath) == 0 {
-		log.Println("indexName and jsonPath cannot be empty")
 		return fmt.Errorf("indexName and jsonPath cannot be empty")
 	}
 
 	cte, err := GetConnection()
 	if err != nil {
-		log.Fatalf("Error getting OS connection: %s", err.Error())
 		return err
 	}
 
 	ndjsonFile, err := os.ReadFile(jsonPath)
 	if err != nil {
-		log.Printf("Error reading file %s: %v", jsonPath, err)
 		return fmt.Errorf("error reading file %s: %w", jsonPath, err)
 	}
 
 	var data []T
 	data, err = ndjson.Unmarshal[T](ndjsonFile)
 	if err != nil {
-		log.Fatalf("Error unmarshalling ndjson file: %s", err.Error())
 		return err
 	}
 
@@ -53,7 +49,7 @@ func IngestDataFromJson[T any](indexName string, jsonPath string) error {
 		defer res.Body.Close()
 
 		if res.IsError() {
-			log.Printf("Error indexing document: %s", string(itemJson))
+			return fmt.Errorf("Error indexing document: %s", string(itemJson))
 		}
 	}
 
