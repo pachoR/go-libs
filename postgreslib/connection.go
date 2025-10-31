@@ -46,10 +46,10 @@ func GetConnection() (*pgx.Conn, error) {
 		if err := TestConnection(); err != nil {
 			log.Printf("Ping attempt failed attempt (%d/%d): %v", retry+1, maxRetries, err.Error())
 			time.Sleep(5 * time.Second)
+			pgConnection = nil
 			continue
 		}
 
-		log.Println("✅ Postgres connection established successfully")
 		return pgConnection, nil
 	}
 
