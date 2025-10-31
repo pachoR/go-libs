@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/joho/godotenv"
-	oslib "github.com/pachoR/go-libs/oslib"
+	// oslib "github.com/pachoR/go-libs/oslib"
+	postgres "github.com/pachoR/go-libs/postgreslib"
 )
 
 func init() {
@@ -20,25 +21,12 @@ type Persona struct {
 }
 
 func main() {
-	indexName := "index_test"
-	// err := oslib.CreateIndex(indexName, "mapping/test-mapping.json")
-	// if err != nil {
-	// 	fmt.Printf("main: %s\n", err.Error())
-	// }
-
-	// fmt.Println("Ingesting data")
-	// err = oslib.IngestDataFromJson[Persona](indexName, "./locals/personas.json")
-
-	query, err := oslib.SearchWithQuery(indexName, `{
-		"query": {
-			"match_all": {}
-		}
-	}`)
-
+	conn, err := postgres.GetConnection()
 	if err != nil {
-		fmt.Printf("Error searching: %s", err.Error())
+		fmt.Println("Error: ", err.Error())
+	} else {
+		fmt.Println(&conn)
 	}
 
-	strQuery := string(query)
-	fmt.Printf("strquery: %s\n", strQuery)
+	postgres.CloseConnection()
 }
