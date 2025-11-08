@@ -59,7 +59,7 @@ func PostBodyWithRetries(url string, payload interface{}) ([]byte, error) {
 	return body, nil
 }
 
-func Get(url string) (*http.Response, error) {
+func GetHTTP(url string) (*http.Response, error) {
 	cte := &http.Client{}
 
 	req, _ := http.NewRequest("GET", url, nil)
@@ -70,7 +70,7 @@ func Get(url string) (*http.Response, error) {
 }
 
 func GetBody(url string) ([]byte, error) {
-	res, err := Get(url)
+	res, err := GetHTTP(url)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +81,33 @@ func GetBody(url string) ([]byte, error) {
 		return nil, err
 	}
 	return body, nil
+}
+
+func Get[K any] (url string) (K, error) {
+	c := &http.Client{}
+	var r K
+
+	rq, _ := http.NewRequest("GET", url, http.NoBody)
+	rq.Header.Add("Accept", "application/json")
+
+	res, err := c.Do(rq)
+	if err != nil {
+		return r, err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return r, err
+	}
+
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		var zero K
+		return zero, nil
+	}
+
+	return r, nil
 }
 
 func GetBodyWithRetries(url string) ([]byte, error) {
@@ -145,4 +172,28 @@ func GetWithRetries(url string) (*http.Response, error) {
 	}
 
 	return res, fmt.Errorf("Get Request unsuccesfully after 4 retries")
+}
+
+func GetWithHeader(url string, headers map[string]string) (*http.Response, error) {
+	client := &http.Client{}
+
+	req, _ := http.NewRequest("GET", url, http.NoBody)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	return client.Do(req)
+}
+
+
+func PostWithHeader(url string, payload interface{}, headers map[string]string) (*http.Response, error) {
+	client := &http.Client{}
+	b, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	return client.Do(req)
 }
