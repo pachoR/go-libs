@@ -1,9 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"os"
+
 	"github.com/joho/godotenv"
+
 	// oslib "github.com/pachoR/go-libs/oslib"
 	// postgres "github.com/pachoR/go-libs/postgreslib"
 	http "github.com/pachoR/go-libs/http"
@@ -13,40 +18,38 @@ func init() {
 	godotenv.Load()
 }
 
+type SymOvw struct {
+	Description  	string  `json:"description"`
+	DisplaySymbol 	string 	`json:"displaySymbol"`
+	Symbol 			string 	`json:"symbol"`
+	Type 			string 	`json:"type"`
+}
+
+type SymbolOverview struct {
+	Count 	int 		`json:"count"`
+	Result 	[]SymOvw 	`json:"result"`
+}
+
 func main() {
-	okurl := "http://localhost:3000"
-	failurl := okurl + "/fail"
-	fmt.Println("Get:")
-	get, err := http.GetBody(okurl)
-	if err != nil {
-		log.Fatalf("Error on correct Get: %s", err.Error())
-	}
-	fmt.Printf("Correct: %s\n", string(get))
+	url := "https://finnhub.io/api/v1/search?q=AAPL&exchange=US"
 
-	getFail, err := http.GetBodyWithRetries(failurl)
-	if err != nil {
-		fmt.Printf("Failed: %s\n", string(getFail))
+	h := map[string]string {
+		"X-Finnhub-Token": fmt.Sprintf("%s", os.Getenv("FINN_TOKEN")),
 	}
-	fmt.Printf("Failed: %s\n", string(getFail))
 
-
-	fmt.Println("\nPost:")
-	mockPayload := struct{
-		Name string
-		Age  int
-	}{
-		Name: "Alejandra",
-		Age: 18,
-	}
-	post, err := http.PostBody(okurl, mockPayload)
+	r, err := http.GetWithHeader(url, h)
 	if err != nil {
-		log.Fatalf("Error on correct Post: %s", err.Error())
+		log.Fatalf("Error: %s", err.Error())
 	}
-	fmt.Printf("Correct: %s\n", string(post))
+	defer r.Body.Close()
 
-	postFail, err := http.PostBodyWithRetries(failurl, mockPayload)
+	var symOvw SymbolOverview
+	bytes, _ := io.ReadAll(r.Body)
+	err = json.Unmarshal(bytes, &symOvw)
 	if err != nil {
-		fmt.Printf("Failed: %s\n", string(getFail))
+		log.Fatalf("Error: %s", err.Error())
 	}
-	fmt.Printf("Failed: %s\n", string(postFail))
+
+	symOvwJson, _ := json.MarshalIndent(symOvw, "", " ")
+	fmt.Printf("symOvwJson: %s\n", string(symOvwJson))
 }

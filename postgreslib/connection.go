@@ -15,7 +15,7 @@ var pgConnection *pgx.Conn
 func connect() error {
 	pgUrl := os.Getenv("PG_URL")
 	if len(pgUrl) == 0 {
-		return fmt.Errorf("Not postgres connection url provided")
+		return fmt.Errorf("NOT POSTGRES CONNECTION URL PROVIDED")
 	}
 
 	conn, err := pgx.Connect(context.Background(), pgUrl)
