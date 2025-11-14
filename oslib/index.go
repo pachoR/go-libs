@@ -35,7 +35,7 @@ func getIndicesByAlias(aliasName string) ([]string, error) {
 		if res.StatusCode == 404 {
 			return []string{}, nil
 		}
-		return nil, fmt.Errorf("error getting alias(%s):(%d) %s", aliasName, res.StatusCode, res.String())
+		return nil, PrintOSErr(res)
 	}
 
 	var result map[string]interface{}
@@ -84,7 +84,7 @@ func CreateIndex(indexName string, mappingPath string) error {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return fmt.Errorf("Error creating index (%s): %s", indexName, res.String())
+		return PrintOSErr(res)
 	}
 	log.Printf("Index %s created successfully\n", fullIndexName)
 
