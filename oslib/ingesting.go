@@ -39,7 +39,7 @@ func IngestFromStruct[K interface{}](indexName string, data K) error {
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return fmt.Errorf("Error indexing document: %s\n%s", err.Error(), string(bytes))
+		return PrintOSErr(res)
 	}
 	return nil
 }
