@@ -15,5 +15,5 @@ go.work
 go.work.sum
 # env file
 .env
-
+./locals
 .DS_STORE
